@@ -18,6 +18,7 @@ const Memory = lazy(() => import('./views/Memory').then((m) => ({ default: m.Mem
 const Config = lazy(() => import('./views/Config').then((m) => ({ default: m.Config })));
 const Docs = lazy(() => import('./views/Docs').then((m) => ({ default: m.Docs })));
 const CLI = lazy(() => import('./views/CLI').then((m) => ({ default: m.CLI })));
+const Chaos = lazy(() => import('./views/Chaos').then((m) => ({ default: m.Chaos })));
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
               <Route path="/config" element={<Config />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/cli" element={<CLI />} />
+              <Route path="/chaos" element={<Chaos />} />
             </Routes>
           </Suspense>
         </Layout>
