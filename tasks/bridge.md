@@ -25,9 +25,11 @@ Store Current and next state here.
 - Ready to merge to main
 
 ## Next State
-- Merge Phase 2 to main branch
-- Begin Phase 3: Memory System (see PRD lines 202-205)
-  - Three-tier memory consolidation
-  - Memory manager implementation
-  - Token counting for triggers
+- ✅ Phase 2 merged to main
+- **Begin Phase 3: Memory System** (see PRD lines 202-205)
+  - Task 6: Short-Term Memory Implementation
+  - Task 7: Medium-Term Memory (Sled Integration)
+  - Task 8: Long-Term Memory (Qdrant Integration)
+  - Task 9: Memory Manager (The Dreamer)
+  - Task 10: Token Counting and Consolidation Triggers
 
