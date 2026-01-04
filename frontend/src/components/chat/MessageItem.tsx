@@ -58,7 +58,8 @@ export function MessageItem({ message }: MessageItemProps) {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
           components={{
-            code({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: unknown }) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            code({ className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
               const isInline = !match;
               return !isInline && match ? (
