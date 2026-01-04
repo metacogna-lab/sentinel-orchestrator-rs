@@ -1,0 +1,39 @@
+/* Additional global styles beyond Tailwind */
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-slate);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cyan-electric);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+/* Selection Styling */
+::selection {
+  background: var(--color-rust-orange);
+  color: var(--color-pure-white);
+}
+
+::-moz-selection {
+  background: var(--color-rust-orange);
+  color: var(--color-pure-white);
+}
+
+/* Focus Visible */
+*:focus-visible {
+  outline: 2px solid var(--color-cyan-electric);
+  outline-offset: 2px;
+}
+
