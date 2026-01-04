@@ -26,9 +26,13 @@ Store Current and next state here.
 
 ## Next State
 - ✅ Phase 2 merged to main
-- **Begin Phase 3: Memory System** (see PRD lines 202-205)
-  - Task 6: Short-Term Memory Implementation
-  - Task 7: Medium-Term Memory (Sled Integration)
+- **Phase 3: Memory System - IN PROGRESS** (see PRD lines 202-205)
+  - ✅ Task 6: Short-Term Memory Implementation - COMPLETE
+    - In-memory conversation history with token counting
+    - Message append/retrieval operations
+    - Consolidation threshold detection
+    - All 12 tests passing
+  - Task 7: Medium-Term Memory (Sled Integration) - NEXT
   - Task 8: Long-Term Memory (Qdrant Integration)
   - Task 9: Memory Manager (The Dreamer)
   - Task 10: Token Counting and Consolidation Triggers
