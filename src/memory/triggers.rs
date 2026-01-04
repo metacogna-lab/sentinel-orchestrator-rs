@@ -109,11 +109,7 @@ impl TokenBudget {
     pub fn remaining(&self) -> Option<u64> {
         self.max_total_tokens.map(|max| {
             let total = self.total();
-            if total > max {
-                0
-            } else {
-                max - total
-            }
+            max.saturating_sub(total)
         })
     }
 
@@ -184,7 +180,8 @@ impl ConsolidationTrigger {
         message_count: usize,
     ) -> Option<ConsolidationPriority> {
         // Critical: Token count exceeds threshold by 2x
-        if token_count >= self.config.short_term_token_threshold * 2 {
+        let critical_threshold = self.config.short_term_token_threshold.saturating_mul(2);
+        if token_count >= critical_threshold {
             return Some(ConsolidationPriority::Critical);
         }
 
