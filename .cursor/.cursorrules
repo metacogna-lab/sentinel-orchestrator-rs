@@ -1,0 +1,31 @@
+# Sentinel Orchestrator - IDE Agent Rules
+
+This project follows Hexagonal Architecture with strict separation of concerns.
+
+## Architecture Rules
+
+- `src/core/` contains pure domain logic - NO external I/O dependencies (no tokio, reqwest, etc.)
+- `src/adapters/` implements traits from `core/traits.rs`
+- Use `async-trait` for async trait methods
+- Keep domain types in `core/types.rs`, errors in `core/error.rs`
+
+## Error Handling
+
+- Use `thiserror` in `src/core` for domain errors
+- Use `anyhow` in binaries/main.rs for application errors
+- Always use `Result<T, E>` - never `unwrap()` or `expect()` in production
+
+## Async Patterns
+
+- Use bounded channels (`mpsc::channel(N)`) for backpressure
+- Use `tokio::spawn` for concurrent tasks
+- Use `tokio::select!` for cancellation and timeouts
+
+## Testing
+
+- Use `mockall` for trait mocking
+- Use `#[tokio::test]` for async tests
+- Integration tests in `tests/` directory
+
+See `.cursor/rules/*.mdc` for detailed Rust-specific guidelines.
+
