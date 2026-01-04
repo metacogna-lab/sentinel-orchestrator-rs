@@ -1,0 +1,18 @@
+---
+title: API Security Review
+status: todo
+---
+
+## Plaintext API Key Storage
+- **Location:** `src/api/middleware.rs:33-96`
+- `ApiKeyStore` keeps API keys as raw `String` values inside an `Arc<RwLock<HashMap<_, _>>>` and uses equality lookups. Architecture docs stress “military-grade” security, yet the store never hashes, redacts, or uses constant-time comparisons. If memory is dumped or `Debug` is derived for the store, every key is exposed.
+- **Recommendation:** Store `secrecy::Secret<String>` (or `SecretVec<u8>`) rather than plain strings, and use `subtle::ConstantTimeEq` when comparing supplied keys. At minimum, implement `Debug` manually to avoid leaking secrets in logs.
+
+## Verbose Authentication Errors
+- **Location:** `src/api/middleware.rs:118-164`
+- The middleware mirrors validation failures back to callers, e.g., “API key must be at least 16 characters.” This makes it easy for attackers to tune brute-force attempts. The architecture guides emphasize robust security posture; responders should return a single generic `invalid_api_key` message while logging detailed reasons internally.
+
+## Missing Key Identifier Validation
+- **Location:** `src/api/middleware.rs:73-115`
+- `load_from_env` accepts `SENTINEL_API_KEY_*` entries without calling `ApiKeyId::validate()`. A typo in the environment name (e.g., containing spaces) would bypass the validation logic in `core/auth.rs`, leading to inconsistent IDs and surprising audit logs.
+- **Recommendation:** Invoke `ApiKeyId::validate()` before the key is stored; reject invalid IDs and surface the error via structured logging so operators can fix their environment configuration.

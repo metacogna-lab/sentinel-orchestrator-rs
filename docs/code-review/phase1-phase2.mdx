@@ -1,0 +1,16 @@
+---
+title: Phase 1 & 2 Code Review
+status: in-progress
+---
+
+## Phase 1 – Core Domain
+- **Leaky API contracts (`src/core/types.rs:183-248`)**: `ChatCompletionRequest`, `ChatCompletionResponse`, and `ErrorResponse` are HTTP-facing DTOs, yet they live in `core`, which the architecture docs (`docs/architecture.md`) reserve for pure domain invariants. Move these structs into `src/api` (or dedicated DTO module) and keep `core` focused on types such as `CanonicalMessage`, `AgentState`, and domain errors. This will keep adapters free to evolve independently and prevents accidental `axum`/`serde_json` creep into the domain layer.
+- **Domain validation returning raw strings (`src/core/auth.rs:28-88`)**: `ApiKeyId::validate` and `ApiKey::validate_format` return `Result<(), String>`, bypassing `SentinelError`. Consider returning `Result<(), SentinelError>` (for example `SentinelError::InvalidApiKeyFormat`) so all validation failures flow through the same error taxonomy described in `tasks/prd.md`.
+
+## Phase 2 – Actor System
+- **Actor loop absent (`src/engine/actor.rs:1`)**: Phase 2 requires the bounded-channel actor loop shown in `docs/architecture.md`, yet the file only contains a placeholder comment. Implement the `tokio::select!` driven loop, explicit state transitions, and backpressure-aware inbox before progressing to later phases.
+- **Supervisor missing (`src/engine/supervisor.rs:1`)**: The supervisor responsibilities (child spawning, zombie detection, restart strategy) described in `tasks/prd.md` are unimplemented. This blocks resilience features like the 60s timeout check and budget kill switches.
+
+## Security & Refactoring Advice
+- **Secrets logged by default (`src/core/auth.rs:55-94`)**: `ApiKey` derives `Debug` and exposes its inner `String` as `pub`. Any debug log or panic will print live secrets, which conflicts with the security posture in `docs/architecture.md`. Wrap the key in `secrecy::Secret<String>` or at minimum implement a manual `Debug` that redacts the value and keep the inner field private with accessor methods that return `&Secret<String>`.
+- **Test debt**: The absence of engine implementations also means there are no unit or integration tests covering the actor workflows mandated in `.cursor/rules/testing.mdc`. Once the actors exist, add `#[tokio::test]` cases (with mock `LLMProvider`/`VectorStore`) to exercise state transitions and timeout handling.
