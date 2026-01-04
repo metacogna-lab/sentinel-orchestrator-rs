@@ -3,27 +3,26 @@
 Store Current and next state here.
 
 ## Current State
-- Conducted Codex code review focused on Phases 1 & 2 per `docs/architecture.md`, `tasks/prd.md`, and `.cursor/rules/*`.
-- Updated `AGENTS.md` to formalize the reviewer protocol and enforced logging of findings in `docs/code-review/`.
-- Authored review artifacts:
-  - `docs/code-review/phase1-phase2.mdx` (core + actor gaps, secret handling).
-  - `docs/code-review/security.mdx` (API key storage, error messages, env validation).
-  - `docs/code-review/api.mdx` (placeholder handlers, duplicate middleware, DTO validation).
-  - `docs/code-review/frontend.mdx` (SPA scaffolding status, Bun workflow).
-- Frontend documentation now mandates Bun-only workflows (`frontend/README.md`) and the PRD + bridge files remain the source of truth.
-- No Rust engine components implemented yet (actors, supervisor, adapters are still placeholders).
+- ✅ **Phase 3: Memory System - COMPLETE**
+  - Task 6: Short-Term Memory (12 tests)
+  - Task 7: Medium-Term Memory (10 tests)
+  - Task 8: Long-Term Memory (4 tests)
+  - Task 9: Memory Manager (7 tests)
+  - Task 10: Token Counting and Triggers (36 total memory tests)
+- ✅ **Phase 4: Integration - COMPLETE**
+  - Task 11: OpenAI Adapter (4 tests, implements LLMProvider)
+  - Task 12: Adapter Boundary Verification (boundaries maintained)
+- All adapters implement their traits correctly
+- Strict hexagonal architecture boundaries verified
+- Core module has no external dependencies
 
 ## Next State
-- Address Phase 1 domain issues:
-  - Move HTTP DTOs (`ChatCompletionRequest`, etc.) out of `src/core/types.rs`.
-  - Make domain validation return `SentinelError` variants and protect `ApiKey` secrets.
-- Complete Phase 2 implementation:
-  - Implement `src/engine/actor.rs` and `src/engine/supervisor.rs` with bounded channels and `tokio::select!`.
-  - Add integration tests (`tests/`) that exercise the actor loop with mock traits.
-- Harden API surface:
-  - Consolidate auth middleware paths, redact error responses, and hash/store API keys securely.
-  - Connect `src/api/routes.rs` handlers to the engine once available; until then, gate endpoints with feature flags or explicit “not implemented” responses.
-- Frontend follow-up:
-  - Replace Vite starter UI with the routed shell described in `frontend/tasks/prd.md`.
-  - Consume shared types from `frontend/src/types` within data services and components.
-- Keep recording new findings in `docs/code-review/` as work progresses and update this bridge after each major milestone.
+- **Phase 5: API Layer** (see PRD)
+  - Route handlers with proper DTO conversion
+  - OpenAPI schema generation
+  - Connect API to engine components
+- Complete Phase 2 implementation (if not done):
+  - Actor event loops
+  - Supervisor implementation
+- Integration testing
+- Frontend development (after backend API complete)
