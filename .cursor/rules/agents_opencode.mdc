@@ -1,0 +1,22 @@
+# OpenCode Agent Prompts
+
+This project references agent prompts stored in `~/.config/opencode/opencode.json`.
+
+## Available Agents
+
+The following agents are defined in the OpenCode configuration:
+
+- **rs_agent** (Canonical Rust Specialist) - Principal Rust Engineer and Compiler Architect
+- **rs_dreamer** (The Memory Specialist) - Focuses on Data Structures, Vector Embeddings, and Storage Efficiency
+- **rs_sentinel** (The Implementer) - Senior Rust Architect focused on high-performance, crash-free execution
+- **rs_supervisor** (The Implementer) - Senior Rust Architect focused on high-performance, crash-free execution
+
+## Usage
+
+These agent prompts are stored in `~/.config/opencode/opencode.json` and can be referenced for role-specific development guidelines. Each prompt defines specific coding standards, philosophies, and interaction rules for that agent role.
+
+The original markdown files are located in `~/.config/opencode/prompts/`:
+- `rs_agent.md`
+- `rs_dreamer.md`
+- `rs_sentinel.md`
+- `rs_supervisor.md`

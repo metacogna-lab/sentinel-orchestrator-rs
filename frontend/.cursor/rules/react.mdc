@@ -1,0 +1,12 @@
+# React
+
+- Use functional components only - no class components
+- Use React hooks (useState, useEffect, useCallback, useMemo) for state and side effects
+- Use TypeScript for all components - .tsx extension, typed props
+- Keep components pure when possible - minimize side effects
+- Use React.memo for expensive components - memoize when props are stable
+- Prefer controlled components over uncontrolled - manage form state explicitly
+- Use proper dependency arrays in useEffect - exhaustive deps
+- Handle loading and error states explicitly - never assume data exists
+- Use error boundaries for error handling - catch component errors gracefully
+- Extract custom hooks for reusable logic - follow hooks naming convention (use*)

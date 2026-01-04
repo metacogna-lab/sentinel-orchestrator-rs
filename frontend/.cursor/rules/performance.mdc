@@ -1,0 +1,12 @@
+# Performance
+
+- Use React.memo for components with expensive renders - memoize when props are stable
+- Use useMemo for expensive computations - cache derived values
+- Use useCallback for stable function references - prevent unnecessary re-renders
+- Code split large routes - use React.lazy and Suspense
+- Avoid inline object/function creation in render - creates new references each render
+- Use proper keys in lists - stable, unique identifiers
+- Debounce/throttle user input handlers - prevent excessive API calls
+- Optimize images - use appropriate formats and sizes
+- Minimize bundle size - use tree shaking, remove unused code
+- Profile performance with React DevTools - identify bottlenecks before optimizing

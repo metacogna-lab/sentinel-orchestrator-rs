@@ -1,0 +1,11 @@
+# TypeScript
+
+- Use strict TypeScript configuration - strict mode enabled, no implicit any
+- Always type function parameters and return types - no implicit any
+- Use interfaces for object shapes, types for unions/intersections
+- Match Rust types from src/core/types.rs exactly - MessageId, AgentId, Role, AgentState, CanonicalMessage
+- Use readonly for immutable data structures
+- Prefer const assertions for literal types
+- Use discriminated unions for type-safe state management
+- Never use `any` - use `unknown` and type guards if needed
+- Export types from dedicated types/ directory - keep types organized

@@ -1,0 +1,98 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# Remove Cargo.lock from gitignore if building an application, leave it for libraries
+# Cargo.lock
+
+# Backup files
+*.bak
+*.swp
+*~
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+*.o
+*.so
+*.dylib
+*.dll
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Test artifacts
+*.gcda
+*.gcno
+*.profdata
+
+# Logs
+*.log
+logs/
+
+# Data directories
+/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Coverage reports
+coverage/
+*.gcov
+lcov.info
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Frontend (if in same repo)
+node_modules/
+frontend/node_modules/
+frontend/.bun/
+frontend/dist/
+frontend/build/
+.npm
+.yarn/
+.pnp.*
+.yarn-integrity
+
+# Bun
+bun.lockb
+
+# Docker
+.dockerignore
+
+# Misc
+*.orig
+.cache/
+

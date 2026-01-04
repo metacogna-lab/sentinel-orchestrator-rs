@@ -1,0 +1,10 @@
+# Architecture
+
+- Follow strict separation between frontend and backend - frontend should not know backend implementation details
+- Use TypeScript interfaces that match src/core/types.rs contracts exactly - immutable API contracts
+- Keep API client layer separate from UI components - use service/API layer pattern
+- Use React hooks for state management - prefer useState, useEffect, useReducer over external state libraries
+- Follow component composition patterns - prefer composition over prop drilling
+- Keep components small and focused - single responsibility principle
+- Use strict TypeScript mode - no implicit any, strict null checks
+- Type all API responses/requests using generated types from OpenAPI schema

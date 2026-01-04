@@ -1,0 +1,45 @@
+# Frontend Development Rules for Sentinel Orchestrator
+
+## Build/Test Commands
+- **Install dependencies**: `bun install`
+- **Dev server**: `bun run dev`
+- **Build**: `bun run build`
+- **Test**: `bun test`
+- **Lint**: `bun run lint`
+- **Type check**: `bun run type-check` (or `tsc --noEmit`)
+
+## Code Style Guidelines
+
+### Architecture
+- Follow strict separation from backend - frontend should only know API contracts
+- Use TypeScript interfaces matching src/core/types.rs exactly
+- Keep API client layer separate from UI components
+- Use React hooks for state management
+
+### TypeScript
+- Use strict TypeScript mode - no implicit any
+- Match Rust types from src/core/types.rs contracts
+- Always type function parameters and return types
+- Use interfaces for object shapes, types for unions
+
+### React
+- Use functional components only
+- Use React hooks for state and side effects
+- Keep components small and focused
+- Handle loading and error states explicitly
+
+### API Integration
+- All API calls must use types matching backend contracts
+- Handle errors explicitly - never swallow API errors
+- Use async/await for async operations
+- Use OpenAPI schema as source of truth
+
+### Testing
+- Use Vitest for unit testing
+- Use React Testing Library for component tests
+- Use MSW for API mocking
+- Test error paths, not just happy paths
+
+### Cursor Rules
+Follow all rules in `.cursor/rules/*.mdc` files for detailed frontend-specific guidelines.
+

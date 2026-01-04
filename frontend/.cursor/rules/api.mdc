@@ -1,0 +1,12 @@
+# API Integration
+
+- All API calls must use types from src/core/types.rs contracts - match backend exactly
+- Use fetch API or axios for HTTP requests - prefer fetch for simplicity
+- Handle errors explicitly - never swallow API errors
+- Use async/await for async operations - avoid promise chains
+- Type all API responses - use TypeScript interfaces matching backend types
+- Implement proper error handling - handle network errors, 4xx, 5xx responses
+- Use OpenAPI schema as source of truth - regenerate types when schema changes
+- Keep API client in dedicated api/ directory - separate from UI components
+- Use environment variables for API base URL - VITE_API_URL or similar
+- Implement request/response interceptors for auth/error handling if needed

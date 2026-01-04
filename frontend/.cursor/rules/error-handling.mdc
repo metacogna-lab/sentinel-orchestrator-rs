@@ -1,0 +1,12 @@
+# Error Handling
+
+- Handle errors explicitly at every level - never ignore errors
+- Use TypeScript Result/Error types for fallible operations - make errors explicit
+- Display user-friendly error messages - never show raw error objects to users
+- Log errors appropriately - use console.error for debugging, consider error reporting service
+- Use error boundaries for component error handling - catch and display component errors
+- Handle API errors gracefully - show appropriate messages for different status codes
+- Validate user input before submission - provide immediate feedback
+- Handle loading states - show loading indicators during async operations
+- Handle empty states - provide meaningful messages when data is empty
+- Never use console.error in production - use proper error logging service

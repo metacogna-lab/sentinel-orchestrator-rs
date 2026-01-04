@@ -1,0 +1,12 @@
+# Testing
+
+- Write tests for components using React Testing Library - test behavior, not implementation
+- Write tests for API client functions - mock fetch/axios responses
+- Use Vitest for unit testing - fast, Vite-native test runner
+- Use MSW (Mock Service Worker) for API mocking - intercept network requests
+- Test error paths, not just happy paths - verify error handling works
+- Use TypeScript in tests - maintain type safety in test code
+- Keep tests simple and focused - one assertion per test when possible
+- Use descriptive test names - describe what is being tested
+- Test user interactions - clicks, form submissions, keyboard events
+- Test edge cases and error conditions - empty states, network failures

@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Sentinel Orchestrator API
+  description: |
+    API for the Sentinel Rust Orchestrator - a production-grade multi-agent orchestration system.
+    This API provides endpoints for chat completions, health checks, and agent management.
+    
+    All types match the immutable contracts defined in src/core/types.rs exactly.
+  version: 1.0.0
+  contact:
+    name: Sentinel Development Team
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.sentinel.example.com
+    description: Production server
+
+paths:
+  /v1/chat/completions:
+    post:
+      summary: Create a chat completion
+      description: |
+        Send a request to the orchestrator to generate a chat completion.
+        This endpoint accepts a list of messages and returns a generated response.
+      operationId: createChatCompletion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+            example:
+              messages:
+                - id: "123e4567-e89b-12d3-a456-426614174000"
+                  role: "user"
+                  content: "Hello, how are you?"
+                  timestamp: "2025-01-20T10:00:00Z"
+                  metadata: {}
+              model: "gpt-4"
+              temperature: 0.7
+              max_tokens: 1000
+              stream: false
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable - circuit breaker open or backpressure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns the health status of the system
+      operationId: getHealth
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /health/ready:
+    get:
+      summary: Readiness check
+      description: Returns whether the system is ready to accept requests (all components initialized)
+      operationId: getReadiness
+      responses:
+        '200':
+          description: System is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: System is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /health/live:
+    get:
+      summary: Liveness check
+      description: Returns whether the system is alive (basic liveness check, always 200)
+      operationId: getLiveness
+      responses:
+        '200':
+          description: System is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+    MessageId:
+      type: string
+      format: uuid
+      description: Unique identifier for a message
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
+    AgentId:
+      type: string
+      format: uuid
+      description: Unique identifier for an agent/actor
+      example: "123e4567-e89b-12d3-a456-426614174001"
+
+    Role:
+      type: string
+      enum: [user, assistant, system]
+      description: Role of a message participant
+      example: "user"
+
+    AgentState:
+      type: string
+      enum: [idle, thinking, toolcall, reflecting]
+      description: Agent state in the state machine
+      example: "idle"
+
+    CanonicalMessage:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - timestamp
+      properties:
+        id:
+          $ref: '#/components/schemas/MessageId'
+        role:
+          $ref: '#/components/schemas/Role'
+        content:
+          type: string
+          description: Message content
+          example: "Hello, how are you?"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when message was created (ISO 8601)
+          example: "2025-01-20T10:00:00Z"
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional metadata (key-value pairs)
+          default: {}
+          example:
+            source: "web"
+            version: "1.0"
+
+    HealthState:
+      type: string
+      enum: [healthy, ready, alive, unhealthy]
+      description: Health state enum
+      example: "healthy"
+
+    HealthStatus:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          $ref: '#/components/schemas/HealthState'
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health check (ISO 8601)
+          example: "2025-01-20T10:00:00Z"
+
+    ChatCompletionRequest:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CanonicalMessage'
+          description: List of messages in the conversation
+        model:
+          type: string
+          description: Model to use (optional, defaults to configured model)
+          example: "gpt-4"
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Temperature for sampling (0.0 to 2.0)
+          example: 0.7
+        max_tokens:
+          type: integer
+          minimum: 1
+          description: Maximum tokens to generate
+          example: 1000
+        stream:
+          type: boolean
+          description: Stream responses
+          default: false
+
+    TokenUsage:
+      type: object
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+      properties:
+        prompt_tokens:
+          type: integer
+          minimum: 0
+          description: Number of tokens in the prompt
+          example: 100
+        completion_tokens:
+          type: integer
+          minimum: 0
+          description: Number of tokens in the completion
+          example: 50
+        total_tokens:
+          type: integer
+          minimum: 0
+          description: Total tokens used
+          example: 150
+
+    ChatCompletionResponse:
+      type: object
+      required:
+        - message
+        - model
+      properties:
+        message:
+          $ref: '#/components/schemas/CanonicalMessage'
+        model:
+          type: string
+          description: Model used for generation
+          example: "gpt-4"
+        usage:
+          $ref: '#/components/schemas/TokenUsage'
+
+    AgentStatus:
+      type: object
+      required:
+        - id
+        - state
+        - last_activity
+        - messages_processed
+      properties:
+        id:
+          $ref: '#/components/schemas/AgentId'
+        state:
+          $ref: '#/components/schemas/AgentState'
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp (ISO 8601)
+          example: "2025-01-20T10:00:00Z"
+        messages_processed:
+          type: integer
+          minimum: 0
+          description: Number of messages processed
+          example: 42
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: Error message
+          example: "Invalid request format"
+        details:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional error details
+          example:
+            field: "messages"
+            reason: "Cannot be empty"
+
+tags:
+  - name: Chat
+    description: Chat completion endpoints
+  - name: Health
+    description: Health check endpoints
+
