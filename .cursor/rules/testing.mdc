@@ -1,0 +1,7 @@
+# Testing
+
+- Use `mockall` for trait mocking in unit tests - generate mocks automatically
+- Use `tokio-test` for async test utilities - timeouts, assertions for futures
+- Integration tests in `tests/` directory - blackbox testing with Docker
+- Test error paths, not just happy paths - verify error handling works
+- Use `#[tokio::test]` for async tests - required for async test functions

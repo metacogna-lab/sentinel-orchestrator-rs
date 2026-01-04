@@ -1,0 +1,7 @@
+# Async Patterns
+
+- Prefer `async fn` over manual `Future` implementations - use async/await syntax
+- Use `tokio::spawn` for concurrent tasks, not blocking threads - keep runtime async
+- Use bounded channels (`mpsc::channel(N)`) for backpressure - prevent OOM under load
+- Await futures in sequence only when dependencies exist - use `join!` or `try_join!` for parallel
+- Use `tokio::select!` for cancellation and timeouts - handle multiple async operations

@@ -1,0 +1,7 @@
+# Performance
+
+- Use `Arc<T>` for shared ownership, not `Rc<T>` - thread-safe reference counting
+- Prefer `&str` over `String` in function parameters - avoid unnecessary allocations
+- Use `Vec::with_capacity()` when size is known - reduce reallocations
+- Avoid unnecessary clones; use references or `Arc` - minimize memory copies
+- Use `#[inline]` sparingly, only for hot paths - let compiler decide otherwise

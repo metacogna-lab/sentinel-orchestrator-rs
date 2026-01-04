@@ -1,0 +1,7 @@
+# Architecture
+
+- Enforce Hexagonal Architecture: core has no external I/O deps - pure domain logic only
+- Traits in `core/traits.rs` define interfaces - adapters implement these traits
+- Adapters in `adapters/` implement traits - keep infrastructure separate from domain
+- Use `async-trait` for async trait methods - required for async trait bounds
+- Keep domain logic pure (no tokio, reqwest, etc. in core) - testable without mocks
