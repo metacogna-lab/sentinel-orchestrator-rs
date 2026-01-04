@@ -1,5 +1,6 @@
 // Axum route handlers with authentication
 
+use axum::extract::Extension;
 use axum::{
     extract::State,
     http::StatusCode,
@@ -8,14 +9,44 @@ use axum::{
     Router,
 };
 use std::sync::Arc;
-use tracing::info;
+use tokio::sync::RwLock;
+use tracing::{info, warn};
 
 use crate::api::middleware::{create_auth_middleware, ApiKeyStore, AuthInfo};
 use crate::core::auth::AuthLevel;
+use crate::core::error::SentinelError;
+use crate::core::traits::LLMProvider;
 use crate::core::types::{
-    AgentStatus, ChatCompletionRequest, ChatCompletionResponse, ErrorResponse, HealthState,
-    HealthStatus,
+    AgentStatus, CanonicalMessage, ChatCompletionRequest, ChatCompletionResponse, ErrorResponse,
+    HealthState, HealthStatus,
 };
+use crate::engine::supervisor::Supervisor;
+
+/// Application state shared across handlers
+#[derive(Clone)]
+pub struct AppState {
+    /// API key store for authentication
+    pub key_store: Arc<ApiKeyStore>,
+    /// LLM provider for chat completions
+    pub llm_provider: Arc<dyn LLMProvider>,
+    /// Supervisor for agent management (optional, wrapped in Arc<RwLock> for thread safety)
+    pub supervisor: Option<Arc<RwLock<Supervisor>>>,
+}
+
+impl AppState {
+    /// Create a new application state
+    pub fn new(
+        key_store: Arc<ApiKeyStore>,
+        llm_provider: Arc<dyn LLMProvider>,
+        supervisor: Option<Arc<RwLock<Supervisor>>>,
+    ) -> Self {
+        Self {
+            key_store,
+            llm_provider,
+            supervisor,
+        }
+    }
+}
 
 /// Health check endpoint (no authentication required)
 pub async fn health_check() -> Json<HealthStatus> {
@@ -25,11 +56,95 @@ pub async fn health_check() -> Json<HealthStatus> {
     })
 }
 
+/// Validate chat completion request
+fn validate_chat_request(
+    request: &ChatCompletionRequest,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if request.messages.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                code: "invalid_request".to_string(),
+                message: "Messages cannot be empty".to_string(),
+                details: Some(std::collections::HashMap::from([(
+                    "field".to_string(),
+                    "messages".to_string(),
+                )])),
+            }),
+        ));
+    }
+
+    // Validate each message has non-empty content
+    for (idx, msg) in request.messages.iter().enumerate() {
+        if msg.content.trim().is_empty() {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    code: "invalid_request".to_string(),
+                    message: format!("Message at index {} has empty content", idx),
+                    details: Some(std::collections::HashMap::from([(
+                        "field".to_string(),
+                        format!("messages[{}].content", idx),
+                    )])),
+                }),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Convert SentinelError to HTTP error response
+fn error_to_response(err: SentinelError) -> (StatusCode, Json<ErrorResponse>) {
+    match err {
+        SentinelError::InvalidMessage { reason } => (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                code: "invalid_request".to_string(),
+                message: reason,
+                details: None,
+            }),
+        ),
+        SentinelError::DomainViolation { rule } => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                code: "internal_error".to_string(),
+                message: rule,
+                details: None,
+            }),
+        ),
+        SentinelError::AuthenticationFailed { reason } => (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                code: "authentication_failed".to_string(),
+                message: reason,
+                details: None,
+            }),
+        ),
+        SentinelError::AuthorizationFailed { reason } => (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                code: "authorization_failed".to_string(),
+                message: reason,
+                details: None,
+            }),
+        ),
+        _ => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                code: "internal_error".to_string(),
+                message: err.to_string(),
+                details: None,
+            }),
+        ),
+    }
+}
+
 /// Chat completion endpoint (requires write access)
 pub async fn chat_completion(
-    State(_key_store): State<Arc<ApiKeyStore>>,
-    auth_info: Option<axum::extract::Extension<AuthInfo>>,
-    Json(_request): Json<ChatCompletionRequest>,
+    State(app_state): State<AppState>,
+    auth_info: Option<Extension<AuthInfo>>,
+    Json(request): Json<ChatCompletionRequest>,
 ) -> Result<Json<ChatCompletionResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Auth info should be present due to middleware, but check for safety
     let _auth = auth_info.ok_or_else(|| {
@@ -43,24 +158,43 @@ pub async fn chat_completion(
         )
     })?;
 
-    info!("Chat completion request received");
+    info!(
+        "Chat completion request received with {} messages",
+        request.messages.len()
+    );
 
-    // TODO: Implement actual chat completion logic
-    // For now, return a placeholder response
+    // Validate request
+    validate_chat_request(&request)?;
+
+    // Convert request messages to CanonicalMessage (they should already be CanonicalMessage)
+    let messages: Vec<CanonicalMessage> = request.messages;
+
+    // Call LLM provider
+    let response = app_state
+        .llm_provider
+        .complete(messages)
+        .await
+        .map_err(error_to_response)?;
+
+    info!("Chat completion successful");
+
+    // Determine model name (use from request or default)
+    let model = request
+        .model
+        .unwrap_or_else(|| "sentinel-orchestrator".to_string());
+
     Ok(Json(ChatCompletionResponse {
-        message: crate::core::types::CanonicalMessage::new(
-            crate::core::types::Role::Assistant,
-            "This is a placeholder response. Chat completion not yet implemented.".to_string(),
-        ),
-        model: "sentinel-orchestrator".to_string(),
+        message: response,
+        model,
+        // Token usage tracking deferred - requires LLMProvider trait changes
         usage: None,
     }))
 }
 
 /// Agent status endpoint (requires read access)
 pub async fn agent_status(
-    State(_key_store): State<Arc<ApiKeyStore>>,
-    auth_info: Option<axum::extract::Extension<AuthInfo>>,
+    State(app_state): State<AppState>,
+    auth_info: Option<Extension<AuthInfo>>,
 ) -> Result<Json<Vec<AgentStatus>>, (StatusCode, Json<ErrorResponse>)> {
     // Auth info should be present due to middleware, but check for safety
     let _auth = auth_info.ok_or_else(|| {
@@ -76,13 +210,52 @@ pub async fn agent_status(
 
     info!("Agent status request received");
 
-    // TODO: Implement actual agent status logic
-    // For now, return empty list
-    Ok(Json(vec![]))
+    // Get supervisor if available
+    let supervisor = app_state.supervisor.as_ref().ok_or_else(|| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse {
+                code: "service_unavailable".to_string(),
+                message: "Supervisor not available".to_string(),
+                details: None,
+            }),
+        )
+    })?;
+
+    // Query supervisor for agent statuses
+    let supervisor_guard = supervisor.read().await;
+    let agent_ids = supervisor_guard.agent_ids();
+
+    let mut agent_statuses = Vec::new();
+    for agent_id in agent_ids {
+        match supervisor_guard.check_agent_health(agent_id) {
+            Ok(health) => {
+                // Count messages processed (simplified - would need actual tracking)
+                // For now, use 0 as placeholder until we add message counting to AgentHandle
+                let messages_processed = 0;
+
+                agent_statuses.push(AgentStatus {
+                    id: health.id,
+                    state: health.state,
+                    last_activity: health.last_activity,
+                    messages_processed,
+                });
+            }
+            Err(e) => {
+                warn!("Failed to get health for agent {}: {}", agent_id, e);
+            }
+        }
+    }
+
+    drop(supervisor_guard);
+
+    info!("Returning status for {} agents", agent_statuses.len());
+    Ok(Json(agent_statuses))
 }
 
 /// Create the API router with authentication middleware
-pub fn create_router(key_store: Arc<ApiKeyStore>) -> Router {
+pub fn create_router(app_state: AppState) -> Router {
+    let key_store = app_state.key_store.clone();
     Router::new()
         .route("/health", get(health_check))
         .route(
@@ -99,23 +272,51 @@ pub fn create_router(key_store: Arc<ApiKeyStore>) -> Router {
                 AuthLevel::Read,
             ))),
         )
-        .with_state(key_store)
+        .with_state(app_state)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::core::auth::{ApiKeyId, AuthLevel};
+    use crate::core::traits::LLMProvider;
+    use crate::core::types::Role;
+    use async_trait::async_trait;
     use axum::{
         body::Body,
         http::{header, Request, StatusCode},
     };
+    use mockall::mock;
     use tower::ServiceExt;
+
+    // Create mock LLM provider for testing
+    mock! {
+        TestLLMProvider {}
+
+        #[async_trait]
+        impl LLMProvider for TestLLMProvider {
+            async fn complete(
+                &self,
+                messages: Vec<CanonicalMessage>,
+            ) -> Result<CanonicalMessage, SentinelError>;
+
+            async fn stream(
+                &self,
+                messages: Vec<CanonicalMessage>,
+            ) -> Result<Box<dyn futures::Stream<Item = Result<String, SentinelError>> + Send + Unpin>, SentinelError>;
+        }
+    }
 
     #[tokio::test]
     async fn test_health_check_no_auth() {
         let key_store = Arc::new(ApiKeyStore::new());
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        mock_llm
+            .expect_complete()
+            .returning(|_| Ok(CanonicalMessage::new(Role::Assistant, "test".to_string())));
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let app_state = AppState::new(key_store, llm_provider, None);
+        let app = create_router(app_state);
 
         let response = app
             .oneshot(
@@ -146,7 +347,13 @@ mod tests {
             .add_key(key.clone(), key_id, AuthLevel::Write)
             .await;
 
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        mock_llm
+            .expect_complete()
+            .returning(|_| Ok(CanonicalMessage::new(Role::Assistant, "test".to_string())));
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let app_state = AppState::new(key_store, llm_provider, None);
+        let app = create_router(app_state);
 
         // Test without auth header
         let response = app
@@ -174,9 +381,18 @@ mod tests {
             .add_key(key.clone(), key_id, AuthLevel::Write)
             .await;
 
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        mock_llm.expect_complete().returning(|_| {
+            Ok(CanonicalMessage::new(
+                Role::Assistant,
+                "test response".to_string(),
+            ))
+        });
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let app_state = AppState::new(key_store, llm_provider, None);
+        let app = create_router(app_state);
 
-        // Test with valid auth header
+        // Test with valid auth header and valid messages
         let response = app
             .oneshot(
                 Request::builder()
@@ -184,7 +400,7 @@ mod tests {
                     .method("POST")
                     .header(header::AUTHORIZATION, format!("Bearer {}", key))
                     .header(header::CONTENT_TYPE, "application/json")
-                    .body(Body::from(r#"{"messages":[]}"#))
+                    .body(Body::from(r#"{"messages":[{"id":"550e8400-e29b-41d4-a716-446655440000","role":"user","content":"Hello","timestamp":"2024-01-01T00:00:00Z"}]}"#))
                     .unwrap(),
             )
             .await
@@ -204,7 +420,10 @@ mod tests {
             .add_key(key.clone(), key_id, AuthLevel::Read)
             .await;
 
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let app_state = AppState::new(key_store, llm_provider, None);
+        let app = create_router(app_state);
 
         // Test with read-only key
         let response = app
@@ -233,7 +452,10 @@ mod tests {
             .add_key(key.clone(), key_id, AuthLevel::Read)
             .await;
 
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let app_state = AppState::new(key_store, llm_provider, None);
+        let app = create_router(app_state);
 
         // Test without auth header
         let response = app
@@ -259,7 +481,11 @@ mod tests {
             .add_key(key.clone(), key_id, AuthLevel::Read)
             .await;
 
-        let app = create_router(key_store);
+        let mut mock_llm = MockTestLLMProvider::new();
+        let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+        let supervisor = Arc::new(RwLock::new(Supervisor::new()));
+        let app_state = AppState::new(key_store, llm_provider, Some(supervisor));
+        let app = create_router(app_state);
 
         // Test with valid auth header
         let response = app
