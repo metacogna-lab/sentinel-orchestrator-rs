@@ -37,3 +37,24 @@
   outline-offset: 2px;
 }
 
+/* Shimmer Animation for Skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-deep-navy) 0%,
+    var(--color-medium-gray) 50%,
+    var(--color-deep-navy) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+

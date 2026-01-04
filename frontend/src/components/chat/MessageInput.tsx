@@ -23,8 +23,12 @@ export function MessageInput({ onSend, disabled = false, placeholder = 'Type you
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-4">
+    <form onSubmit={handleSubmit} className="flex gap-4" aria-label="Message input form">
+      <label htmlFor="message-input" className="sr-only">
+        Message input
+      </label>
       <input
+        id="message-input"
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
@@ -32,11 +36,14 @@ export function MessageInput({ onSend, disabled = false, placeholder = 'Type you
         disabled={disabled}
         className="input flex-1"
         autoFocus
+        aria-label="Type your message"
+        aria-required="true"
       />
       <button
         type="submit"
         disabled={disabled || !input.trim()}
         className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Send message"
       >
         Send
       </button>

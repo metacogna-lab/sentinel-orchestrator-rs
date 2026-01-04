@@ -5,7 +5,7 @@
 
 export function Footer() {
   return (
-    <footer className="border-t border-cyan-electric/20 bg-dark-slate/80 backdrop-blur-sm mt-auto">
+    <footer className="border-t border-cyan-electric/20 bg-dark-slate/80 backdrop-blur-sm mt-auto" role="contentinfo">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="text-medium-gray text-sm">
