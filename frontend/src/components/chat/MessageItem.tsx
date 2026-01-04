@@ -58,9 +58,10 @@ export function MessageItem({ message }: MessageItemProps) {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
           components={{
-            code({ inline, className, children, ...props }) {
+            code({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) {
               const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
+              const isInline = !match;
+              return !isInline && match ? (
                 <pre className="bg-deep-navy rounded-lg p-4 overflow-x-auto border border-cyan-electric/20">
                   <code className={className} {...props}>
                     {children}
