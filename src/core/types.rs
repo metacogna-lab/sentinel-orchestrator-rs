@@ -5,11 +5,13 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Unique identifier for a message (NewType pattern)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
+#[schema(transparent)]
 pub struct MessageId(pub Uuid);
 
 impl MessageId {
@@ -44,8 +46,9 @@ impl std::fmt::Display for MessageId {
 }
 
 /// Unique identifier for an agent/actor
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
+#[schema(transparent)]
 pub struct AgentId(pub Uuid);
 
 impl AgentId {
@@ -80,8 +83,9 @@ impl std::fmt::Display for AgentId {
 }
 
 /// Role of a message participant
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
+#[schema(rename_all = "lowercase")]
 pub enum Role {
     /// User-sent message
     User,
@@ -92,8 +96,9 @@ pub enum Role {
 }
 
 /// Agent state in the state machine
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
+#[schema(rename_all = "lowercase")]
 pub enum AgentState {
     /// Agent is idle, waiting for messages
     Idle,
@@ -173,7 +178,7 @@ impl AgentState {
 
 /// Canonical message format - pure domain type with no external dependencies
 /// This is the immutable contract for all message communication
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct CanonicalMessage {
     /// Unique identifier for this message
     pub id: MessageId,
@@ -224,7 +229,7 @@ impl CanonicalMessage {
 }
 
 /// Health status response
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct HealthStatus {
     /// Health status
     pub status: HealthState,
@@ -233,8 +238,9 @@ pub struct HealthStatus {
 }
 
 /// Health state enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
+#[schema(rename_all = "lowercase")]
 pub enum HealthState {
     /// System is healthy
     Healthy,
@@ -247,7 +253,7 @@ pub enum HealthState {
 }
 
 /// Chat completion request (API contract)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ChatCompletionRequest {
     /// List of messages in the conversation
     pub messages: Vec<CanonicalMessage>,
@@ -266,7 +272,7 @@ pub struct ChatCompletionRequest {
 }
 
 /// Chat completion response (API contract)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct ChatCompletionResponse {
     /// Generated message
     pub message: CanonicalMessage,
@@ -278,7 +284,7 @@ pub struct ChatCompletionResponse {
 }
 
 /// Token usage information
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct TokenUsage {
     /// Number of tokens in the prompt
     pub prompt_tokens: u32,
@@ -289,7 +295,7 @@ pub struct TokenUsage {
 }
 
 /// Agent status information
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct AgentStatus {
     /// Agent identifier
     pub id: AgentId,
@@ -302,7 +308,7 @@ pub struct AgentStatus {
 }
 
 /// Error response format (API contract)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub struct ErrorResponse {
     /// Error code
     pub code: String,

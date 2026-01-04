@@ -17,10 +17,12 @@ use crate::core::auth::AuthLevel;
 use crate::core::error::SentinelError;
 use crate::core::traits::LLMProvider;
 use crate::core::types::{
-    AgentStatus, CanonicalMessage, ChatCompletionRequest, ChatCompletionResponse, ErrorResponse,
-    HealthState, HealthStatus,
+    AgentState, AgentStatus, CanonicalMessage, ChatCompletionRequest, ChatCompletionResponse,
+    ErrorResponse, HealthState, HealthStatus, Role, TokenUsage,
 };
 use crate::engine::supervisor::Supervisor;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 /// Application state shared across handlers
 #[derive(Clone)]
@@ -49,6 +51,14 @@ impl AppState {
 }
 
 /// Health check endpoint (no authentication required)
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "System is healthy", body = HealthStatus)
+    )
+)]
 pub async fn health_check() -> Json<HealthStatus> {
     Json(HealthStatus {
         status: HealthState::Healthy,
@@ -141,6 +151,22 @@ fn error_to_response(err: SentinelError) -> (StatusCode, Json<ErrorResponse>) {
 }
 
 /// Chat completion endpoint (requires write access)
+#[utoipa::path(
+    post,
+    path = "/v1/chat/completions",
+    tag = "Chat",
+    request_body = ChatCompletionRequest,
+    responses(
+        (status = 200, description = "Chat completion successful", body = ChatCompletionResponse),
+        (status = 400, description = "Bad request - invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized - authentication required", body = ErrorResponse),
+        (status = 403, description = "Forbidden - insufficient permissions", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
 pub async fn chat_completion(
     State(app_state): State<AppState>,
     auth_info: Option<Extension<AuthInfo>>,
@@ -192,6 +218,19 @@ pub async fn chat_completion(
 }
 
 /// Agent status endpoint (requires read access)
+#[utoipa::path(
+    get,
+    path = "/v1/agents/status",
+    tag = "Agents",
+    responses(
+        (status = 200, description = "Agent status retrieved successfully", body = Vec<AgentStatus>),
+        (status = 401, description = "Unauthorized - authentication required", body = ErrorResponse),
+        (status = 503, description = "Service unavailable - supervisor not available", body = ErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
 pub async fn agent_status(
     State(app_state): State<AppState>,
     auth_info: Option<Extension<AuthInfo>>,
@@ -253,10 +292,54 @@ pub async fn agent_status(
     Ok(Json(agent_statuses))
 }
 
+/// OpenAPI schema definition
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        health_check,
+        chat_completion,
+        agent_status
+    ),
+    components(schemas(
+        CanonicalMessage,
+        ChatCompletionRequest,
+        ChatCompletionResponse,
+        AgentStatus,
+        HealthStatus,
+        HealthState,
+        ErrorResponse,
+        TokenUsage,
+        Role,
+        AgentState
+    )),
+    tags(
+        (name = "Health", description = "Health check endpoints"),
+        (name = "Chat", description = "Chat completion endpoints"),
+        (name = "Agents", description = "Agent management endpoints")
+    ),
+    info(
+        title = "Sentinel Orchestrator API",
+        description = "API for the Sentinel Rust Orchestrator - a production-grade multi-agent orchestration system.\n\nAll types match the immutable contracts defined in src/core/types.rs exactly.",
+        version = "1.0.0",
+        contact(
+            name = "Sentinel Development Team"
+        )
+    ),
+    servers(
+        (url = "http://localhost:3000", description = "Local development server"),
+        (url = "https://api.sentinel.example.com", description = "Production server")
+    )
+)]
+pub struct ApiDoc;
+
 /// Create the API router with authentication middleware
 pub fn create_router(app_state: AppState) -> Router {
     let key_store = app_state.key_store.clone();
     Router::new()
+        .merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/openapi.json", ApiDoc::openapi())
+        )
         .route("/health", get(health_check))
         .route(
             "/v1/chat/completions",
