@@ -2,7 +2,7 @@
 // In-memory conversation history with token counting and consolidation triggers
 
 use crate::core::error::SentinelError;
-use crate::core::types::CanonicalMessage;
+use crate::core::types::{CanonicalMessage, Role};
 use std::sync::{Arc, RwLock};
 
 /// Default maximum number of messages in short-term memory
