@@ -30,7 +30,7 @@ async fn make_chat_request(
         model: Some("gpt-4".to_string()),
         temperature: Some(0.7),
         max_tokens: Some(1000),
-        stream: Some(false),
+        stream: false,
     };
 
     client
@@ -284,7 +284,7 @@ async fn test_invalid_authentication() {
             model: None,
             temperature: None,
             max_tokens: None,
-            stream: None,
+            stream: false,
         })
         .send()
         .await
