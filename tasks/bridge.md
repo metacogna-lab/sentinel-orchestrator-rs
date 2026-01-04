@@ -3,16 +3,31 @@
 Store Current and next state here.
 
 ## Current State
-- Created feature branch: `feature/tasks-setup`
-- Established `tasks/` folder structure with bridge.md, errors.md, instructions.md, prd.md, and start.md
-- Created comprehensive PRD document based on architecture and research docs
-- Created authoritative start.md guide enforcing all project rules
-- Verified project compiles successfully (`cargo check` passed with no errors)
-- Ready to begin development workflow per start.md
+- ✅ **Phase 2: Actor System - COMPLETE**
+  - Task 2: Channel-Based Communication Infrastructure ✅
+    - Bounded channels with backpressure handling
+    - Channel utilities and timeout support
+    - All tests passing (12/12)
+  - Task 3: Explicit State Machine Implementation ✅
+    - State transition validation logic
+    - Valid next states computation
+    - Complete state cycle tests
+  - Task 4: Actor Event Loops (The Sentinel) ✅
+    - Main actor event loop with `tokio::select!`
+    - Message processing pipeline
+    - Cancellation and shutdown handling
+  - Task 5: Supervisor Actor ✅
+    - Agent lifecycle management (spawn, terminate, restart)
+    - Health monitoring and zombie detection (>60s timeout)
+    - Supervisor event loop with periodic health checks
+- Feature branch: `feature/phase-2-actor-system`
+- All Phase 2 components implemented and tested
+- Ready to merge to main
 
 ## Next State
-- Begin Phase 1, Item 1 (if not complete): Domain types verification
-- Follow start.md workflow: branch → test → implement → test → commit → merge
-- Work exclusively on backend/Rust until all phases complete
-- Generate OpenAPI schema before frontend work begins
+- Merge Phase 2 to main branch
+- Begin Phase 3: Memory System (see PRD lines 202-205)
+  - Three-tier memory consolidation
+  - Memory manager implementation
+  - Token counting for triggers
 
