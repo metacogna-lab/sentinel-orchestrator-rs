@@ -58,7 +58,7 @@ export function MessageItem({ message }: MessageItemProps) {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
           components={{
-            code({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) {
+            code({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: unknown }) {
               const match = /language-(\w+)/.exec(className || '');
               const isInline = !match;
               return !isInline && match ? (
