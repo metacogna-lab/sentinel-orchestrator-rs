@@ -32,7 +32,12 @@ Store Current and next state here.
     - Message append/retrieval operations
     - Consolidation threshold detection
     - All 12 tests passing
-  - Task 7: Medium-Term Memory (Sled Integration) - NEXT
+  - ✅ Task 7: Medium-Term Memory (Sled Integration) - COMPLETE
+    - Persistent conversation summaries with Sled database
+    - Store/retrieve/list/delete operations
+    - Bincode serialization for efficient storage
+    - All 10 tests passing
+  - Task 8: Long-Term Memory (Qdrant Integration) - NEXT
   - Task 8: Long-Term Memory (Qdrant Integration)
   - Task 9: Memory Manager (The Dreamer)
   - Task 10: Token Counting and Consolidation Triggers
