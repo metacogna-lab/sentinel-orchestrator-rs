@@ -1,5 +1,14 @@
 # Task Instructions
 
+**AUTHENTICATION IMPLEMENTED**: API key authentication and authorization system has been implemented (Phase 5). Features include:
+- Core auth domain types (ApiKeyId, ApiKey, AuthLevel, AuthResult) in `src/core/auth.rs`
+- Authentication middleware with Bearer token support (OpenAI-compatible)
+- Authorization middleware with permission levels (Read/Write/Admin)
+- API routes protected: `/v1/chat/completions` (Write), `/v1/agents/status` (Read)
+- Environment variable support: `SENTINEL_API_KEY_<ID>=<KEY>:<LEVEL>`
+- Comprehensive tests for all auth functionality
+- See `tasks/bridge_auth.md` for full implementation details
+
 Always start a new feature branch for new work, write tests to start, develop a phase of @tasks/prd.md - test, commit, merge, push main. Then start again. Run "/check" if in rust and use the rs_agent in claude code. Follow the PRD and only edit do not delete. If you find errors record them in tasks/errors.md
 
 Always follow @docs/architecture.md to ensure architecture is rigorous and defined. All code must adhere to the architectural principles documented there.
