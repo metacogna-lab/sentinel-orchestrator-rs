@@ -1,54 +1,34 @@
-# React + TypeScript + Vite
+# Sentinel Orchestrator Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript SPA that visualizes the Sentinel backend. Follow the PRD in `tasks/prd.md` and keep all TypeScript contracts synchronized with `src/core/types.rs`.
 
-Currently, two official plugins are available:
+## Tooling
+- **Package Manager:** Bun only. Never use npm/yarn/pnpm in this workspace.
+- **Runtime:** Vite + React 19 with ESLint 9 and TypeScript 5.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Install dependencies once per machine:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+bun install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development Commands
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Task | Command | Notes |
+| --- | --- | --- |
+| Dev server with HMR | `bun run dev` | Serves at http://localhost:5173 |
+| Type check + production build | `bun run build` | Runs `tsc -b` followed by `vite build` |
+| Preview prod build | `bun run preview` | Uses Vite preview server |
+| Lint | `bun run lint` | Must pass before PR submission |
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Project Structure
+- `src/` – React components, routes, hooks, and shared types (`src/types` mirrors Rust core types).
+- `public/` – Static assets copied verbatim to the build.
+- `tasks/` – Frontend-specific bridge + PRD; keep them updated as flows evolve.
+- `bun.lock` – Deterministic dependency lock file (do not edit manually).
+
+## Workflow Expectations
+1. Model changes in Rust first, regenerate shared TypeScript types, then consume them in React.
+2. Follow the neo-punk design language documented in `tasks/prd.md`.
+3. Use Bun scripts for all CI commands and Docker builds (see `Dockerfile` for reference).
+4. Record architectural or UX issues in `docs/code-review/` to keep backend + frontend reviews aligned.

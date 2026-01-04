@@ -1,0 +1,17 @@
+---
+title: Frontend Review
+status: draft
+---
+
+## State of the SPA
+- **Template placeholder (`frontend/src/App.tsx:1-34`)**: The UI is still the default Vite counter demo. None of the PRD views (Dashboard, Chat, Agent Management, etc.) exist, so there is no way to visualize the orchestrator, display metrics, or manage agents. Build out the routing shell with React Router, shared layout, and stub pages before attempting deeper integrations.
+- **Unenforced shared types (`frontend/src/types/index.ts:1-109`)**: The TypeScript contracts mirror the Rust models, but nothing in the app consumes them yet. Without API clients or schema validation, the definitions can drift silently from `src/core/types.rs`. Wire these interfaces into fetch hooks, DTO mappers, and form schemas so every component compiles against the canonical contracts.
+
+## Tooling Guidance
+- **Package manager**: Use Bun for every workflow (`bun install`, `bun run dev`, `bun run build`). Remove any npm/yarn references from scripts or docs to avoid dual lock files. The Dockerfile already leverages Bun—mirror those commands locally and in CI.
+- **Dependencies**: `frontend/node_modules/` is present in the repo workspace. Keep it untracked (already ignored) and rely on `bun.lock` for reproducible installs. If contributors accidentally commit it, purge the folder and recommit.
+
+## Next Steps
+1. Replace the Vite starter content with the real navigation structure defined in `frontend/tasks/prd.md`, including dark theme scaffolding and a global state slice for live agent metrics.
+2. Introduce API clients (fetch/SSE/WebSocket) that consume the backend endpoints once the Rust actors are operational; mock data behind feature flags until then.
+3. Document Bun-centric workflows (README already updated) and add CI steps that run `bun run lint` and `bun run build` so the “use Bun, not npm” rule is enforceable.

@@ -1,0 +1,19 @@
+---
+title: API Surface Review
+status: draft
+---
+
+## Placeholder Handlers
+- **Location:** `src/api/routes.rs:28-82`
+- Both `chat_completion` and `agent_status` end with TODO comments and stub payloads. The PRD’s Phase 2 requirements insist that `/v1/chat/completions` push canonical messages through the actor system (LLMProvider + bounded channels) and that `/v1/agents/status` report live supervisor data. Today the API ignores the request body entirely and returns a fabricated `CanonicalMessage`, so nothing exercises the engine.
+- **Recommendation:** Wire these handlers into the engine once the actors exist. Accept `ChatCompletionRequest`, run validation, forward it through the orchestrator, and map the resulting `CanonicalMessage`/state snapshots into DTOs. Until then, guard the endpoints (e.g., feature flag) so clients know the functionality is incomplete.
+
+## Divergent Auth Paths
+- **Location:** `src/api/middleware.rs:108-214` and `src/api/middleware.rs:216-299`
+- There are now two independent middleware stacks: `auth_middleware`+`require_auth_level` and the newer `create_auth_middleware`/`auth_with_level_middleware`. Only the latter is used by the router, yet both emit responses and log statements. This duplication invites skew—the first path still leaks specific formatting errors and does not share telemetry with the second.
+- **Recommendation:** Remove or unify the unused path. Prefer a single `AuthLayer` type that handles validation + authorization + extension insertion so future updates (e.g., secret redaction) touch one code path.
+
+## Missing Request Validation
+- **Location:** `src/api/routes.rs:28-58`
+- The chat endpoint never validates `ChatCompletionRequest.messages` before passing them downstream. Architecture docs require domain invariants (non-empty turn history, alternating roles, token budgets) to be enforced at the boundary. Without validation, malformed or adversarial payloads can reach engine components and produce undefined state transitions.
+- **Recommendation:** Introduce a DTO validation step that maps `ChatCompletionRequest` into vetted `CanonicalMessage` instances, returning `ErrorResponse` with `SentinelError::InvalidMessage` when the payload breaches documented rules.

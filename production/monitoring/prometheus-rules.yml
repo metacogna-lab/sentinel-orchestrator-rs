@@ -1,0 +1,115 @@
+# Prometheus alerting rules for Sentinel Orchestrator
+groups:
+  - name: sentinel_alerts
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec for the last 5 minutes"
+
+      # High latency (p99 > 500ms)
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "p99 latency is {{ $value }}s (threshold: 0.5s)"
+
+      # Circuit breaker open
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state{state="open"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker {{ $labels.name }} is open"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{name="sentinel-backend-prod"} / container_spec_memory_limit_bytes{name="sentinel-backend-prod"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name="sentinel-backend-prod"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      # Agent zombie detection
+      - alert: AgentZombieDetected
+        expr: agent_last_heartbeat_seconds > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Zombie agent detected"
+          description: "Agent {{ $labels.agent_id }} has not sent heartbeat for {{ $value }}s"
+
+      # Budget threshold warning
+      - alert: BudgetThresholdWarning
+        expr: (token_consumption_total / token_budget_total) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Budget threshold warning"
+          description: "Token consumption is {{ $value | humanizePercentage }} of budget"
+
+      # Budget exceeded
+      - alert: BudgetExceeded
+        expr: token_consumption_total > token_budget_total
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Budget exceeded"
+          description: "Token consumption ({{ $value }}) exceeds budget"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="sentinel-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "Sentinel backend service is down"
+
+      # Database connection failure
+      - alert: DatabaseConnectionFailure
+        expr: database_connection_errors_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failure"
+          description: "Database connection errors detected"
+
+      # High backpressure
+      - alert: HighBackpressure
+        expr: channel_queue_size / channel_capacity > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backpressure detected"
+          description: "Channel {{ $labels.channel_name }} is {{ $value | humanizePercentage }} full"
+

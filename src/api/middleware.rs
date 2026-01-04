@@ -216,13 +216,20 @@ pub async fn auth_middleware(
 pub fn create_auth_middleware(
     key_store: Arc<ApiKeyStore>,
     required_level: AuthLevel,
-) -> impl Fn(Request, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response, (StatusCode, axum::Json<serde_json::Value>)>> + Send>> + Clone {
+) -> impl Fn(
+    Request,
+    Next,
+) -> std::pin::Pin<
+    Box<
+        dyn std::future::Future<
+                Output = Result<Response, (StatusCode, axum::Json<serde_json::Value>)>,
+            > + Send,
+    >,
+> + Clone {
     move |request: Request, next: Next| {
         let store = key_store.clone();
         let level = required_level;
-        Box::pin(async move {
-            auth_with_level_middleware(request, next, store, level).await
-        })
+        Box::pin(async move { auth_with_level_middleware(request, next, store, level).await })
     }
 }
 
@@ -307,7 +314,10 @@ async fn auth_with_level_middleware(
         auth_level,
     });
 
-    info!("Authenticated and authorized request with key_id: {}", key_id);
+    info!(
+        "Authenticated and authorized request with key_id: {}",
+        key_id
+    );
     Ok(next.run(request).await)
 }
 
