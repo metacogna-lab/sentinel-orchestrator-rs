@@ -12,17 +12,18 @@ Store Current and next state here.
 - ✅ **Phase 4: Integration - COMPLETE**
   - Task 11: OpenAI Adapter (4 tests, implements LLMProvider)
   - Task 12: Adapter Boundary Verification (boundaries maintained)
+- ✅ **Phase 5: API Layer - COMPLETE**
+  - Task 13: API Route Handlers (6 tests, LLM integration)
+  - Task 14: OpenAPI Schema Generation (utoipa integration, Swagger UI)
 - All adapters implement their traits correctly
 - Strict hexagonal architecture boundaries verified
 - Core module has no external dependencies
+- OpenAPI schema generated and accessible at /swagger-ui
 
 ## Next State
-- **Phase 5: API Layer** (see PRD)
-  - Route handlers with proper DTO conversion
-  - OpenAPI schema generation
-  - Connect API to engine components
-- Complete Phase 2 implementation (if not done):
-  - Actor event loops
-  - Supervisor implementation
-- Integration testing
-- Frontend development (after backend API complete)
+- **Phase 6: Integration & Testing** (see PRD)
+  - Integration tests in tests/ directory
+  - End-to-end API tests
+  - Performance benchmarks
+  - Documentation updates
+- Frontend development (after Phase 6 complete)
