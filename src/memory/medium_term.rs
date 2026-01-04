@@ -101,10 +101,7 @@ impl MediumTermMemory {
 
         debug!("Opened medium-term memory database at {:?}", path_buf);
 
-        Ok(Self {
-            db,
-            path: path_buf,
-        })
+        Ok(Self { db, path: path_buf })
     }
 
     /// Store a conversation summary
@@ -166,7 +163,10 @@ impl MediumTermMemory {
     /// # Returns
     /// * `Ok(Vec<ConversationSummary>)` - List of summaries
     /// * `Err(SentinelError)` - Error if listing fails
-    pub fn list_summaries(&self, agent_id: AgentId) -> Result<Vec<ConversationSummary>, SentinelError> {
+    pub fn list_summaries(
+        &self,
+        agent_id: AgentId,
+    ) -> Result<Vec<ConversationSummary>, SentinelError> {
         let prefix = format!("{}:", agent_id);
         let mut summaries = Vec::new();
 
@@ -190,7 +190,11 @@ impl MediumTermMemory {
             }
         }
 
-        debug!("Listed {} summaries for agent {}", summaries.len(), agent_id);
+        debug!(
+            "Listed {} summaries for agent {}",
+            summaries.len(),
+            agent_id
+        );
         Ok(summaries)
     }
 
@@ -231,9 +235,11 @@ impl MediumTermMemory {
     /// * `Ok(())` - Successfully flushed
     /// * `Err(SentinelError)` - Error if flush fails
     pub fn flush(&self) -> Result<(), SentinelError> {
-        self.db.flush().map_err(|e| SentinelError::DomainViolation {
-            rule: format!("Failed to flush database: {}", e),
-        })?;
+        self.db
+            .flush()
+            .map_err(|e| SentinelError::DomainViolation {
+                rule: format!("Failed to flush database: {}", e),
+            })?;
         Ok(())
     }
 }
@@ -287,18 +293,10 @@ mod tests {
         let (_temp_dir, memory) = create_test_memory();
 
         let agent_id = AgentId::new();
-        let summary1 = ConversationSummary::new(
-            agent_id,
-            "conv-1".to_string(),
-            "Summary 1".to_string(),
-            5,
-        );
-        let summary2 = ConversationSummary::new(
-            agent_id,
-            "conv-2".to_string(),
-            "Summary 2".to_string(),
-            8,
-        );
+        let summary1 =
+            ConversationSummary::new(agent_id, "conv-1".to_string(), "Summary 1".to_string(), 5);
+        let summary2 =
+            ConversationSummary::new(agent_id, "conv-2".to_string(), "Summary 2".to_string(), 8);
 
         memory.store_summary(summary1).unwrap();
         memory.store_summary(summary2).unwrap();
@@ -314,18 +312,10 @@ mod tests {
         let agent_id1 = AgentId::new();
         let agent_id2 = AgentId::new();
 
-        let summary1 = ConversationSummary::new(
-            agent_id1,
-            "conv-1".to_string(),
-            "Summary 1".to_string(),
-            5,
-        );
-        let summary2 = ConversationSummary::new(
-            agent_id2,
-            "conv-1".to_string(),
-            "Summary 2".to_string(),
-            8,
-        );
+        let summary1 =
+            ConversationSummary::new(agent_id1, "conv-1".to_string(), "Summary 1".to_string(), 5);
+        let summary2 =
+            ConversationSummary::new(agent_id2, "conv-1".to_string(), "Summary 2".to_string(), 8);
 
         memory.store_summary(summary1).unwrap();
         memory.store_summary(summary2).unwrap();
@@ -408,12 +398,8 @@ mod tests {
     #[test]
     fn test_storage_key_format() {
         let agent_id = AgentId::new();
-        let summary = ConversationSummary::new(
-            agent_id,
-            "conv-123".to_string(),
-            "Test".to_string(),
-            5,
-        );
+        let summary =
+            ConversationSummary::new(agent_id, "conv-123".to_string(), "Test".to_string(), 5);
 
         let key = summary.storage_key();
         assert!(key.contains(&agent_id.to_string()));
@@ -437,4 +423,3 @@ mod tests {
         memory.flush().unwrap(); // Should not panic
     }
 }
-
