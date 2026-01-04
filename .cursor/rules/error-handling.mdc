@@ -1,0 +1,7 @@
+# Error Handling
+
+- Use `thiserror` for domain errors in `src/core` - derive `Error` trait with context
+- Use `anyhow` for application errors in binaries/main.rs - use `Context` for error chains
+- Always propagate errors with `?` operator - never swallow errors silently
+- Never use `unwrap()` or `expect()` in production code - use proper error handling
+- Use `Result<T, E>` for all fallible operations - make failure explicit in types
