@@ -87,19 +87,17 @@ pub fn create_router(key_store: Arc<ApiKeyStore>) -> Router {
         .route("/health", get(health_check))
         .route(
             "/v1/chat/completions",
-            post(chat_completion)
-                .layer(axum::middleware::from_fn(create_auth_middleware(
-                    key_store.clone(),
-                    AuthLevel::Write,
-                ))),
+            post(chat_completion).layer(axum::middleware::from_fn(create_auth_middleware(
+                key_store.clone(),
+                AuthLevel::Write,
+            ))),
         )
         .route(
             "/v1/agents/status",
-            get(agent_status)
-                .layer(axum::middleware::from_fn(create_auth_middleware(
-                    key_store.clone(),
-                    AuthLevel::Read,
-                ))),
+            get(agent_status).layer(axum::middleware::from_fn(create_auth_middleware(
+                key_store.clone(),
+                AuthLevel::Read,
+            ))),
         )
         .with_state(key_store)
 }
@@ -131,7 +129,7 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
         let health: HealthStatus = serde_json::from_slice(&body).unwrap();
         assert_eq!(health.status, HealthState::Healthy);
     }
