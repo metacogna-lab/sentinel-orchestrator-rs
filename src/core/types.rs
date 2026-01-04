@@ -11,7 +11,6 @@ use uuid::Uuid;
 /// Unique identifier for a message (NewType pattern)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
-#[schema(transparent)]
 pub struct MessageId(pub Uuid);
 
 impl MessageId {
@@ -48,7 +47,6 @@ impl std::fmt::Display for MessageId {
 /// Unique identifier for an agent/actor
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
-#[schema(transparent)]
 pub struct AgentId(pub Uuid);
 
 impl AgentId {
