@@ -352,7 +352,7 @@ mod tests {
         let shared = create_shared_memory();
 
         {
-            let mut memory = shared.write().unwrap();
+            let mut memory = shared.blocking_write();
             let msg = CanonicalMessage::new(Role::User, "test".to_string());
             memory.append_message(msg).unwrap();
         }
