@@ -15,6 +15,7 @@ const navigation = [
   { name: 'Config', href: '/config', icon: '⚙️' },
   { name: 'Docs', href: '/docs', icon: '📚' },
   { name: 'CLI', href: '/cli', icon: '⌨️' },
+  { name: 'Chaos', href: '/chaos', icon: '⚡' },
 ];
 
 export function Sidebar() {

@@ -6,4 +6,5 @@ export { Memory } from './Memory';
 export { Config } from './Config';
 export { Docs } from './Docs';
 export { CLI } from './CLI';
+export { Chaos } from './Chaos';
 
