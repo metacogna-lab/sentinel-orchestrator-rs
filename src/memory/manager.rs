@@ -281,7 +281,7 @@ fn generate_summary(messages: &[CanonicalMessage]) -> String {
     // Future: Use LLM for intelligent summarization
     messages
         .iter()
-        .map(|msg| format!("{}: {}", msg.role, msg.content))
+        .map(|msg| format!("{:?}: {}", msg.role, msg.content))
         .collect::<Vec<_>>()
         .join("\n")
 }

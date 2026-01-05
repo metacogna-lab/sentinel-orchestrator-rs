@@ -3,7 +3,8 @@
 
 use crate::core::error::SentinelError;
 use crate::core::types::CanonicalMessage;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 /// Default maximum number of messages in short-term memory
 pub const DEFAULT_MAX_MESSAGES: usize = 1000;
@@ -164,16 +165,18 @@ impl Default for ShortTermMemory {
 
 /// Thread-safe wrapper for short-term memory
 /// Uses `Arc<RwLock<>>` for shared access
-pub type SharedShortTermMemory = Arc<RwLock<ShortTermMemory>>;
+/// Shared short-term memory using tokio::sync::RwLock for async access
+pub type SharedShortTermMemory = Arc<tokio::sync::RwLock<ShortTermMemory>>;
 
 /// Create a new shared short-term memory instance
 pub fn create_shared_memory() -> SharedShortTermMemory {
-    Arc::new(RwLock::new(ShortTermMemory::new()))
+    Arc::new(tokio::sync::RwLock::new(ShortTermMemory::new()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::types::Role;
 
     #[test]
     fn test_append_message() {
@@ -355,7 +358,7 @@ mod tests {
         }
 
         {
-            let memory = shared.read().unwrap();
+            let memory = shared.blocking_read();
             assert_eq!(memory.message_count(), 1);
         }
     }
