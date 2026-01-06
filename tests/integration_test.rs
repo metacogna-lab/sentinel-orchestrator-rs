@@ -6,19 +6,61 @@ use axum::{
     http::{header, Request, StatusCode},
 };
 use sentinel::api::middleware::ApiKeyStore;
-use sentinel::api::routes::create_router;
+use sentinel::api::routes::{create_router, AppState};
 use sentinel::core::auth::{ApiKeyId, AuthLevel};
+use sentinel::core::error::SentinelError;
+use sentinel::core::traits::LLMProvider;
 use sentinel::core::types::{
     CanonicalMessage, ChatCompletionRequest, ChatCompletionResponse, HealthState,
     HealthStatus, Role,
 };
+use async_trait::async_trait;
+use mockall::mock;
 use std::sync::Arc;
 use tower::ServiceExt;
 
-/// Helper to create a test router with API key store
+// Mock LLM provider for testing (test-only, does NOT affect API contract)
+mock! {
+    TestLLMProvider {}
+
+    #[async_trait]
+    impl LLMProvider for TestLLMProvider {
+        async fn complete(
+            &self,
+            messages: Vec<CanonicalMessage>,
+        ) -> Result<CanonicalMessage, SentinelError>;
+
+        async fn stream(
+            &self,
+            messages: Vec<CanonicalMessage>,
+        ) -> Result<Box<dyn futures::Stream<Item = Result<String, SentinelError>> + Send + Unpin>, SentinelError>;
+    }
+}
+
+/// Helper to create a test router with API key store and mock LLM provider
+/// NOTE: This is test-only code and does NOT affect the API contract
 fn create_test_router() -> (axum::Router, Arc<ApiKeyStore>) {
     let key_store = Arc::new(ApiKeyStore::new());
-    let app = create_router(key_store.clone());
+    let mut mock_llm = MockTestLLMProvider::new();
+    mock_llm
+        .expect_complete()
+        .returning(|messages| {
+            if messages.is_empty() {
+                Ok(CanonicalMessage::new(
+                    Role::Assistant,
+                    "No messages provided".to_string(),
+                ))
+            } else {
+                let last_message = messages.last().unwrap();
+                Ok(CanonicalMessage::new(
+                    Role::Assistant,
+                    format!("Echo: {}", last_message.content),
+                ))
+            }
+        });
+    let llm_provider: Arc<dyn LLMProvider> = Arc::new(mock_llm);
+    let app_state = AppState::new(key_store.clone(), llm_provider, None);
+    let app = create_router(app_state);
     (app, key_store)
 }
 
