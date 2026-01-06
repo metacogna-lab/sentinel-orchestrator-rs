@@ -1,18 +1,10 @@
 /**
  * Chat API service - Handles chat completion requests
- * Simple API client for chat functionality
+ * Uses centralized API client
  */
 
-import type { ChatCompletionRequest, ChatCompletionResponse, ErrorResponse } from '../types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
-/**
- * Get API key from localStorage
- */
-function getApiKey(): string | null {
-  return localStorage.getItem('sentinel_api_key');
-}
+import type { ChatCompletionRequest, ChatCompletionResponse } from '../types';
+import { api } from './api';
 
 /**
  * Create chat completion (non-streaming)
@@ -20,38 +12,21 @@ function getApiKey(): string | null {
 export async function createChatCompletion(
   request: ChatCompletionRequest
 ): Promise<ChatCompletionResponse> {
-  const apiKey = getApiKey();
-  
-  const response = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
-    },
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    const error: ErrorResponse = await response.json().catch(() => ({
-      code: 'unknown_error',
-      message: `HTTP ${response.status}: ${response.statusText}`,
-    }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+  return api.post<ChatCompletionResponse>('/v1/chat/completions', request);
 }
 
 /**
  * Create chat completion with streaming
  * Returns an async generator that yields message chunks
+ * Note: Streaming uses fetch directly as it requires special handling
  */
 export async function* createChatCompletionStream(
   request: ChatCompletionRequest
 ): AsyncGenerator<string, void, unknown> {
-  const apiKey = getApiKey();
+  const baseURL = api.getBaseUrl();
+  const apiKey = localStorage.getItem('sentinel_api_key');
   
-  const response = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
+  const response = await fetch(`${baseURL}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -61,7 +36,7 @@ export async function* createChatCompletionStream(
   });
 
   if (!response.ok) {
-    const error: ErrorResponse = await response.json().catch(() => ({
+    const error = await response.json().catch(() => ({
       code: 'unknown_error',
       message: `HTTP ${response.status}: ${response.statusText}`,
     }));

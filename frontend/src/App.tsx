@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/ui';
+import { AuthProvider } from './store/auth';
 
 // Lazy load views for code splitting
 const Dashboard = lazy(() => import('./views/Dashboard').then((m) => ({ default: m.Dashboard })));
@@ -23,29 +24,31 @@ const Chaos = lazy(() => import('./views/Chaos').then((m) => ({ default: m.Chaos
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <Layout>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <LoadingSpinner />
-              </div>
-            }
-          >
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/agents" element={<Agents />} />
-              <Route path="/metrics" element={<Metrics />} />
-              <Route path="/memory" element={<Memory />} />
-              <Route path="/config" element={<Config />} />
-              <Route path="/docs" element={<Docs />} />
-              <Route path="/cli" element={<CLI />} />
-              <Route path="/chaos" element={<Chaos />} />
-            </Routes>
-          </Suspense>
-        </Layout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <LoadingSpinner />
+                </div>
+              }
+            >
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/agents" element={<Agents />} />
+                <Route path="/metrics" element={<Metrics />} />
+                <Route path="/memory" element={<Memory />} />
+                <Route path="/config" element={<Config />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/cli" element={<CLI />} />
+                <Route path="/chaos" element={<Chaos />} />
+              </Routes>
+            </Suspense>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
